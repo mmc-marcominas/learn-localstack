@@ -7,11 +7,13 @@ services:
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+      - "127.0.0.1:53:53"                # Expose DNS server to host
+      - "127.0.0.1:53:53/udp"            # Expose DNS server to host
     environment:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
       # - DEBUG=${DEBUG:-0}
       DEBUG: '1'
-      SERVICES: 'sqs,s3,dynamodb,kms'
+      SERVICES: 'sqs,s3,dynamodb,kms,route53'
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE'
       AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
       AWS_DEFAULT_REGION: 'us-east-1'

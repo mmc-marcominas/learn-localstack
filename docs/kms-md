@@ -53,12 +53,14 @@ Expected result:
 ### Encrypt data
 
 ``` bash
-aws --endpoint-url=http://localhost:4566 kms encrypt --key-id {YOUR-KEY-ID} --plaintext "some important stuff" --output text --query CiphertextBlob | base64 --decode > my_encrypted_data && cat ./my_encrypted_data && echo ''
+key_id=$(aws --endpoint-url=http://localhost:4566 kms list-keys | jq -r '.Keys[0].KeyId') && echo $key_id
+
+aws --endpoint-url=http://localhost:4566 kms encrypt --key-id $key_id --plaintext "some important stuff" --output text --query CiphertextBlob | base64 --decode > my_encrypted_data && cat ./my_encrypted_data && echo ''
 ```
 
 Expected result:
 ``` text
-�y�N722c-310e-4b95-b567-a9e797299f42�C�pV��m��4{�=4����>�Bж�)՗�{Lk�)A녁�ǝ��o��
+bc2592a3-f9f8-43d5-8c70-b4641293a06d��x�4H�//�  �fZ$�H��w�F�M$  �'D}3���<WH/��/_�D#������0ī6
 ```
 
 ### Decrypt data

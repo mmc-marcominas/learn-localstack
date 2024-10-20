@@ -85,3 +85,12 @@ Try execute all commands and you will:
  - [x] create KMS key
  - [x] encrypt data with created key
  - [x] decrypt data
+
+## Trying AWS Route 53 service on Localstack
+
+To enable Route 53 on Localstack, read [this AWS Route 53 documentation](./docs/route-53.md).
+
+Try execute all commands and you will:
+ - [x] create a hosted zone
+ - [x] Change resource record sets
+ - [x] query DNS record
