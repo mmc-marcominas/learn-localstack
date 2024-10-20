@@ -72,7 +72,7 @@ receipt_handle=$(aws --endpoint-url=http://localhost:4566 --region us-east-1  sq
 aws --endpoint-url=http://localhost:4566 --region us-east-1  sqs delete-message --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/some-important-queue --receipt-handle $receipt_handle
 ```
 
-## Validate DLQ queue configuration.
+## Validate DLQ queue configuration
 
 Create a message on a queue with SQL attribute.
 
@@ -96,4 +96,74 @@ You can try read message and no message will be returned. Now, try read messages
 
 ``` bash
 aws --endpoint-url=http://localhost:4566 --region us-east-1  sqs receive-message --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/some-important-queue-dlq | jq
+```
+
+## List messages with curl
+
+``` bash
+ curl -H "Accept: application/json" "http://sqs.us-east-1.localhost.localstack.cloud:4566/_aws/sqs/messages?QueueUrl=http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/some-important-queue" | jq
+ ```
+
+Expected result:
+
+ ``` json
+ {
+  "ReceiveMessageResponse": {
+    "ReceiveMessageResult": {
+      "Message": [
+        {
+          "MessageId": "2a4ded21-598a-4f6b-8045-92125a5a1771",
+          "MD5OfBody": "74a01a1f990e739151a2bf4f530e49f3",
+          "Body": "{ 'event_id': 'e13dcbda-1ad4-46c6-9092-a9d6c31e573b', 'event_time': '2024-10-20 19:40:55Z', 'data': { 'some-id': 83411, 'name': 'Marco Minas', 'status': 'active' } }",
+          "Attribute": [
+            {
+              "Name": "SenderId",
+              "Value": "000000000000"
+            },
+            {
+              "Name": "SentTimestamp",
+              "Value": "1729464055643"
+            },
+            {
+              "Name": "ApproximateReceiveCount",
+              "Value": "0"
+            },
+            {
+              "Name": "ApproximateFirstReceiveTimestamp",
+              "Value": "0"
+            }
+          ],
+          "ReceiptHandle": "SQS/BACKDOOR/ACCESS"
+        },
+        {
+          "MessageId": "3d8fe170-5394-4941-9464-672d6430af82",
+          "MD5OfBody": "38c79369eed36b7dbc9d1a515fedc927",
+          "Body": "{ 'event_id': '571279c8-e7c4-47b7-ad28-50addf5b7eec', 'event_time': '2024-10-20 19:40:58Z', 'data': { 'some-id': 83411, 'name': 'Marco Minas', 'status': 'active' } }",
+          "Attribute": [
+            {
+              "Name": "SenderId",
+              "Value": "000000000000"
+            },
+            {
+              "Name": "SentTimestamp",
+              "Value": "1729464059448"
+            },
+            {
+              "Name": "ApproximateReceiveCount",
+              "Value": "0"
+            },
+            {
+              "Name": "ApproximateFirstReceiveTimestamp",
+              "Value": "0"
+            }
+          ],
+          "ReceiptHandle": "SQS/BACKDOOR/ACCESS"
+        }
+      ]
+    },
+    "ResponseMetadata": {
+      "RequestId": "b8583c46-99ea-48b6-8cd9-2b327d19d0c8"
+    }
+  }
+}
 ```
