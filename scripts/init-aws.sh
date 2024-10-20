@@ -12,7 +12,7 @@ create_queue_with_dlq() {
         --attributes '{ "RedrivePolicy": " { \"deadLetterTargetArn\" : \"arn:aws:sqs:us-east-1:000000000000:'${QUEUE_NAME}'-dlq\", \"maxReceiveCount\": \"3\" }" }'
 }
 
-create_queue_with_dlq "some-queue-with-dlq"
+create_queue_with_dlq "some-important-queue"
 
 # create all queues of a "env" file - any line with a XXX_QUEUE_NAME=name-of-xxx-queue
 # example: FIRST_QUEUE_NAME=first-queue

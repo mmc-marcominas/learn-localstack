@@ -33,3 +33,24 @@ A summary about  this script is:
  - [x] a queue and a DLQ queue `some-important-queue` wil be created due `create_queue_with_dlq "some-important-queue"` line command. Also, `some-important-queue-dlq` will be applyed as DLQ queue of `some-important-queue`
  - [x] it will create one queue, one DLQ queue to each line of [env-settings file](../env-settings) containing `QUEUE_NAME=`
  - [x] also each DLQ queue QUEUE_NAME will be attributed to the correspondent queue QUEUE_NAME
+
+To check all created queues try:
+``` bash
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues
+```
+
+Expected result is something like this:
+``` json
+{
+    "QueueUrls": [
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/some-important-queue",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/some-important-queue-dlq",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/first-queue",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/first-queue-dlq",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/second-queue",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/second-queue-dlq",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/third-queue",
+        "http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/third-queue-dlq"
+    ]
+}
+```
