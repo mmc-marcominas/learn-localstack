@@ -1,6 +1,6 @@
 # Adding DynamoDB feature
 
-On [docker-compose file](../docker-compose.yml), change `SERVICES: 'sqs'` to `SERVICES: 'sqs,s3,dynamodb'` adding AWS S3 service.
+On [docker-compose file](../docker-compose.yml), change `SERVICES: 'sqs,s3'` to `SERVICES: 'sqs,s3,dynamodb'` adding AWS S3 service.
 
 ## Useful commands
 
