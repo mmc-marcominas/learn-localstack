@@ -34,7 +34,7 @@ localstack-main  | LocalStack build git hash: 007dde9f2
 ...
 ```
 
-See [detailed explanation here](./docs/start.md).
+See [detailed initialization explanation here](./docs/init.md).
 
 ### Local stack info
 
@@ -56,3 +56,13 @@ Expected result sample:
 ```
 
 If jq not installed: `sudo apt  install jq`
+
+## Trying AWS S3 service on Localstack
+
+Enable S3 on Localstack is very easy, [this documentation](./docs/s3.md) show how to do this.
+
+Try execute all commands and you will:
+ - [x] create a bucket
+ - [x] add a object on created bucket
+ - [x] lis buckets and it's contents
+ - [x] create a signed url and access via curl
