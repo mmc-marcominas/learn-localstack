@@ -8,7 +8,7 @@ create_queue_with_dlq() {
     aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name ${QUEUE_NAME} --region us-east-1
     aws --endpoint-url=http://localstack:4566 sqs create-queue --queue-name ${QUEUE_NAME}-dlq --region us-east-1
     aws --endpoint-url=http://localstack:4566 sqs set-queue-attributes --region us-east-1 \
-        --queue-url http://localstack:4566/000000000000/${QUEUE_NAME}-dlq \
+        --queue-url http://localstack:4566/000000000000/${QUEUE_NAME} \
         --attributes '{ "RedrivePolicy": " { \"deadLetterTargetArn\" : \"arn:aws:sqs:us-east-1:000000000000:'${QUEUE_NAME}'-dlq\", \"maxReceiveCount\": \"3\" }" }'
 }
 
