@@ -76,3 +76,12 @@ Try execute all commands and you will:
  - [x] add items on created bucket
  - [x] list tables and it's contents
  - [x] query/filter items on table
+
+## Trying AWS KMS service on Localstack
+
+Enable KMS on Localstack is very simple too, [this AWS KMS documentation](./docs/kms-md) show how to do this.
+
+Try execute all commands and you will:
+ - [x] create KMS key
+ - [x] encrypt data with created key
+ - [x] decrypt data

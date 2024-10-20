@@ -1,0 +1,73 @@
+# Adding KMS feature
+
+On [docker-compose file](../docker-compose.yml), change `SERVICES: 'sqs,s3,dynamodb'` to `SERVICES: 'sqs,s3,dynamodb,kms'` adding AWS KMS service.
+
+## Useful commands
+
+### Create a key
+
+``` bash
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms create-key | jq
+```
+
+Expected result:
+``` json
+{
+  "KeyMetadata": {
+    "AWSAccountId": "000000000000",
+    "KeyId": "cd94722c-310e-4b95-b567-a9e797299f42",
+    "Arn": "arn:aws:kms:us-east-1:000000000000:key/cd94722c-310e-4b95-b567-a9e797299f42",
+    "CreationDate": 1729454745.12618,
+    "Enabled": true,
+    "Description": "",
+    "KeyUsage": "ENCRYPT_DECRYPT",
+    "KeyState": "Enabled",
+    "Origin": "AWS_KMS",
+    "KeyManager": "CUSTOMER",
+    "CustomerMasterKeySpec": "SYMMETRIC_DEFAULT",
+    "EncryptionAlgorithms": [
+      "SYMMETRIC_DEFAULT"
+    ]
+  }
+}
+```
+
+### List keys
+
+``` bash
+aws --endpoint-url=http://localhost:4566 kms list-keys | jq
+```
+
+Expected result:
+``` json
+{
+  "Keys": [
+    {
+      "KeyId": "cd94722c-310e-4b95-b567-a9e797299f42",
+      "KeyArn": "arn:aws:kms:us-east-1:000000000000:key/cd94722c-310e-4b95-b567-a9e797299f42"
+    }
+  ]
+}
+```
+
+### Encrypt data
+
+``` bash
+aws --endpoint-url=http://localhost:4566 kms encrypt --key-id {YOUR-KEY-ID} --plaintext "some important stuff" --output text --query CiphertextBlob | base64 --decode > my_encrypted_data && cat ./my_encrypted_data && echo ''
+```
+
+Expected result:
+``` text
+�y�N722c-310e-4b95-b567-a9e797299f42�C�pV��m��4{�=4����>�Bж�)՗�{Lk�)A녁�ǝ��o��
+```
+
+### Decrypt data
+
+``` bash
+aws --endpoint-url=http://localhost:4566 kms decrypt --ciphertext-blob fileb://my_encrypted_data --output text --query Plaintext | base64 --decode && echo ''
+```
+
+Expected result:
+``` text
+some important stuff
+```
