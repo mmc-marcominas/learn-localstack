@@ -1,0 +1,23 @@
+# version: "3.8"
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      # - DEBUG=${DEBUG:-0}
+      DEBUG: '1'
+      SERVICES: 'sqs'
+      AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE'
+      AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+      AWS_DEFAULT_REGION: 'us-east-1'
+      AWS_DEFAULT_OUTPUT: 'json'
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./env-settings:/tmp/env-settings"
+      - "./scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
