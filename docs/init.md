@@ -36,7 +36,7 @@ A summary about  this script is:
 
 To check all created queues try:
 ``` bash
-aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues | jq
 ```
 
 Expected result is something like this:
