@@ -59,10 +59,20 @@ If jq not installed: `sudo apt  install jq`
 
 ## Trying AWS S3 service on Localstack
 
-Enable S3 on Localstack is very easy, [this documentation](./docs/s3.md) show how to do this.
+Enable S3 on Localstack is very easy, [this AWS S3 documentation](./docs/s3.md) show how to do this.
 
 Try execute all commands and you will:
  - [x] create a bucket
  - [x] add a object on created bucket
  - [x] lis buckets and it's contents
  - [x] create a signed url and access via curl
+
+## Trying AWS DynamoDB service on Localstack
+
+Enable DynamoDB on Localstack is very simple too, [this AWS DynamoDB documentation](./docs/dynamo-db.md) show how to do this.
+
+Try execute all commands and you will:
+ - [x] create a table
+ - [x] add items on created bucket
+ - [x] list tables and it's contents
+ - [x] query/filter items on table
