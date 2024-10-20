@@ -3,6 +3,7 @@
 ## Quickstart
 
 Reference:
+
 - [x] [Getting started - quickstart](https://docs.localstack.cloud/getting-started/quickstart/)
 - [x] [Localstack 101](https://docs.localstack.cloud/academy/localstack-101/)
 - [x] [Gitlab CI test containers](https://docs.localstack.cloud/tutorials/gitlab_ci_testcontainers/)
@@ -62,6 +63,7 @@ If jq not installed: `sudo apt  install jq`
 Enable S3 on Localstack is very easy, [this AWS S3 documentation](./docs/s3.md) show how to do this.
 
 Try execute all commands and you will:
+
  - [x] create a bucket
  - [x] add a object on created bucket
  - [x] lis buckets and it's contents
@@ -82,6 +84,7 @@ Try execute all commands and you will:
 Enable KMS on Localstack is very simple too, [this AWS KMS documentation](./docs/kms-md) show how to do this.
 
 Try execute all commands and you will:
+
  - [x] create KMS key
  - [x] encrypt data with created key
  - [x] decrypt data
@@ -94,3 +97,13 @@ Try execute all commands and you will:
  - [x] create a hosted zone
  - [x] Change resource record sets
  - [x] query DNS record
+
+## Using SQS
+
+Read [this SQS documentation](./docs/sqs.md) and you will:
+
+ - [x] list queues
+ - [x] send message to queue
+ - [x] receive sent message
+ - [x] delete sent message
+ - [x] validate DLQ queue configuration
