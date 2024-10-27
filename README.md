@@ -107,3 +107,4 @@ Read [this SQS documentation](./docs/sqs.md) and you will:
  - [x] receive sent message
  - [x] delete sent message
  - [x] validate DLQ queue configuration
+ - [x] validate DLQ queue configuration
