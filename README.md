@@ -39,7 +39,9 @@ See [detailed initialization explanation here](./docs/init.md).
 
 ### Local stack info
 
-`curl http://localhost:4566/_localstack/info | jq`
+``` bash
+curl http://localhost:4566/_localstack/info | jq
+```
 
 Expected result sample:
 ``` json
@@ -107,3 +109,15 @@ Read [this SQS documentation](./docs/sqs.md) and you will:
  - [x] receive sent message
  - [x] delete sent message
  - [x] validate DLQ queue configuration
+
+## Using SNS
+
+Read [this SNS documentation](./docs/sns.md) and you will:
+
+ - [x] list topics
+ - [x] get topic attributes
+ - [x] subscribe queue on a topic
+ - [x] list subscriptions
+ - [x] publish message on topic
+ - [x] receive sent message on queue
+ - [x] topic unsubscription

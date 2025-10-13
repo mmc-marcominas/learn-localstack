@@ -13,7 +13,7 @@ services:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
       # - DEBUG=${DEBUG:-0}
       DEBUG: '1'
-      SERVICES: 'sqs,s3,dynamodb,kms,route53'
+      SERVICES: 'sqs,s3,sns,dynamodb,kms,route53'
       AWS_ACCESS_KEY_ID: 'AKIAIOSFODNN7EXAMPLE'
       AWS_SECRET_ACCESS_KEY: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
       AWS_DEFAULT_REGION: 'us-east-1'
