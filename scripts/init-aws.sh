@@ -94,9 +94,9 @@ done <<< $(grep "TOPIC_NAME=" /tmp/env-settings | cut -d'=' -f2 | grep -v '^$' |
 # create all topics subscription of a "env" file - any line with a BUCKET_TOPIC_SUBSCRIPTIONNAME=name-of-xxx-subscription
 # example: TOPIC_SUBSCRIPTION=first-topic=first-queue={ "eventType": ["first-event"] }
 while read S; do
-    TOPIC_NAME=$(echo $S | cut -d'=' -f1)
-    QUEUE_NAME=$(echo $S | cut -d'=' -f2)
-    FILTER_POLICY=$(echo $S | cut -d'=' -f3)
+    TOPIC_NAME=$(echo $S | cut -d'|' -f1)
+    QUEUE_NAME=$(echo $S | cut -d'|' -f2)
+    FILTER_POLICY=$(echo $S | cut -d'|' -f3)
 
     create_topic_subscription ${TOPIC_NAME} ${QUEUE_NAME} "${FILTER_POLICY}"
 done <<< $(grep "TOPIC_SUBSCRIPTION=" /tmp/env-settings | cut -d'=' -f 2-5 | grep -v '^$')
