@@ -1,123 +1,191 @@
-# A personal learnig experience with Localstack
+# LocalStack Infrastructure Automation
 
-## Quickstart
+A Docker-based LocalStack environment that automatically provisions AWS infrastructure components based on configuration files. This project enables rapid development and testing of AWS services locally with minimal setup.
 
-Reference:
+## 🎯 Project Overview
 
-- [x] [Getting started - quickstart](https://docs.localstack.cloud/getting-started/quickstart/)
-- [x] [Localstack 101](https://docs.localstack.cloud/academy/localstack-101/)
-- [x] [Gitlab CI test containers](https://docs.localstack.cloud/tutorials/gitlab_ci_testcontainers/)
+This project provides an automated infrastructure-as-code solution for LocalStack, allowing developers to define their AWS resources in a simple configuration file and have them automatically provisioned when the LocalStack container starts.
 
+### Key Features
 
-## Useful commands
+- **🔄 Queue Creation with DLQ**: Automatically creates SQS queues with dead letter queues for reliable message processing
+- **🪣 Bucket Creation**: Provisions S3 buckets for object storage
+- **📢 Topic Creation with Subscriptions**: Sets up SNS topics with queue subscriptions and optional filter policies
+- **⚙️ Configuration-Driven**: Define all infrastructure through a simple `env-settings` file
+- **🚀 Zero-Configuration Setup**: Infrastructure is created automatically on container startup
 
-### Load instance
+## 🚀 Quick Start
 
-``` bash
+### Prerequisites
+
+- Docker and Docker Compose
+- `jq` (optional, for JSON formatting): `sudo apt install jq`
+
+### 1. Configure Your Infrastructure
+
+Edit the `env-settings` file to define your AWS resources:
+
+```bash
+# SQS Queues (automatically created with DLQ)
+FIRST_QUEUE_NAME=my-processing-queue
+SECOND_QUEUE_NAME=my-notification-queue
+
+# S3 Buckets
+FIRST_BUCKET_NAME=my-app-storage
+SECOND_BUCKET_NAME=my-backup-storage
+
+# SNS Topics
+FIRST_TOPIC_NAME=my-event-topic
+
+# Topic Subscriptions (format: topic|queue|filter_policy)
+FIRST_TOPIC_SUBSCRIPTION=my-event-topic|my-processing-queue|{ "eventType": ["user-action"] }
+SECOND_TOPIC_SUBSCRIPTION=my-event-topic|my-notification-queue|{ "eventType": ["system-alert"] }
+THIRD_TOPIC_SUBSCRIPTION=my-event-topic|my-processing-queue
+```
+
+### 2. Start LocalStack
+
+```bash
 docker compose up
 ```
 
-Expected result sample:
-``` bash
-[+] Running 1/1
- ✔ Container localstack-main  Created                                                                          0.3s
-Attaching to localstack-main
-localstack-main  | LocalStack supervisor: starting
-localstack-main  | LocalStack supervisor: localstack process (PID 15) starting
-localstack-main  | 2024-10-20T16:02:10.429 DEBUG --- [  MainThread] l.utils.docker_utils       : Using SdkDockerClient. LEGACY_DOCKER_CLIENT: False, SDK installed: True
-localstack-main  | 2024-10-20T16:02:11.147  WARN --- [  MainThread] l.services.internal        : Enabling diagnose endpoint, please be aware that this can expose sensitive information via your network.
-localstack-main  | 2024-10-20T16:02:11.181 DEBUG --- [  MainThread] plux.runtime.manager       : instantiating plugin PluginSpec(localstack.runtime.components.aws = <class 'localstack.aws.components.AwsComponents'>)
-localstack-main  | 2024-10-20T16:02:11.181 DEBUG --- [  MainThread] plux.runtime.manager       : loading plugin localstack.runtime.components:aws
-localstack-main  |
-localstack-main  | LocalStack version: 3.7.3.dev40
-localstack-main  | LocalStack build date: 2024-09-21
-localstack-main  | LocalStack build git hash: 007dde9f2
-...
-```
+The infrastructure will be automatically created based on your `env-settings` configuration.
 
-See [detailed initialization explanation here](./docs/init.md).
+### 3. Verify Infrastructure
 
-### Local stack info
-
-``` bash
+Check LocalStack status:
+```bash
 curl http://localhost:4566/_localstack/info | jq
 ```
 
-Expected result sample:
-``` json
-{
-  "version": "3.7.3.dev40:007dde9f2",
-  "edition": "community",
-  "is_license_activated": false,
-  "session_id": "dfcd37d1-2c2f-484f-bf65-4e00a0434aac",
-  "machine_id": "dkr_8b45de376e9f",
-  "system": "linux",
-  "is_docker": true,
-  "server_time_utc": "2024-09-22T19:12:26",
-  "uptime": 3464
-}
+View created resources:
+```bash
+# List all buckets
+awslocal s3api list-buckets
+
+# List all queues
+awslocal sqs list-queues
+
+# List all topics
+awslocal sns list-topics
+
+# List all subscriptions
+awslocal sns list-subscriptions
 ```
 
-If jq not installed: `sudo apt  install jq`
+## 📋 Configuration Reference
 
-## Trying AWS S3 service on Localstack
+### Environment Settings Format
 
-Enable S3 on Localstack is very easy, [this AWS S3 documentation](./docs/s3.md) show how to do this.
+The `env-settings` file uses a simple key-value format to define AWS resources:
 
-Try execute all commands and you will:
+#### Queue Configuration
+```bash
+# Format: {PREFIX}_QUEUE_NAME={queue-name}
+FIRST_QUEUE_NAME=my-processing-queue
+SECOND_QUEUE_NAME=my-notification-queue
+```
 
- - [x] create a bucket
- - [x] add a object on created bucket
- - [x] lis buckets and it's contents
- - [x] create a signed url and access via curl
+Each queue is automatically created with a corresponding dead letter queue (`{queue-name}-dlq`) and configured with a redrive policy (maxReceiveCount: 3).
 
-## Trying AWS DynamoDB service on Localstack
+#### Bucket Configuration
+```bash
+# Format: {PREFIX}_BUCKET_NAME={bucket-name}
+FIRST_BUCKET_NAME=my-app-storage
+SECOND_BUCKET_NAME=my-backup-storage
+```
 
-Enable DynamoDB on Localstack is very simple too, [this AWS DynamoDB documentation](./docs/dynamo-db.md) show how to do this.
+#### Topic Configuration
+```bash
+# Format: {PREFIX}_TOPIC_NAME={topic-name}
+FIRST_TOPIC_NAME=my-event-topic
+```
 
-Try execute all commands and you will:
- - [x] create a table
- - [x] add items on created bucket
- - [x] list tables and it's contents
- - [x] query/filter items on table
+#### Topic Subscription Configuration
+```bash
+# Format: {PREFIX}_TOPIC_SUBSCRIPTION={topic-name}|{queue-name}|{filter-policy}
+# Filter policy is optional - omit for no filtering
+FIRST_TOPIC_SUBSCRIPTION=my-event-topic|my-processing-queue|{ "eventType": ["user-action"] }
+SECOND_TOPIC_SUBSCRIPTION=my-event-topic|my-notification-queue|{ "eventType": ["system-alert"] }
+THIRD_TOPIC_SUBSCRIPTION=my-event-topic|my-processing-queue
+```
 
-## Trying AWS KMS service on Localstack
+## 🔧 Advanced Usage
 
-Enable KMS on Localstack is very simple too, [this AWS KMS documentation](./docs/kms-md) show how to do this.
+### Manual Resource Management
 
-Try execute all commands and you will:
+While the automated setup handles most use cases, you can also manually interact with the created resources:
 
- - [x] create KMS key
- - [x] encrypt data with created key
- - [x] decrypt data
+#### SQS Operations
+```bash
+# Send a message to a queue
+awslocal sqs send-message --queue-url http://localhost:4566/000000000000/my-processing-queue --message-body "Hello World"
 
-## Trying AWS Route 53 service on Localstack
+# Receive messages
+awslocal sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue
 
-To enable Route 53 on Localstack, read [this AWS Route 53 documentation](./docs/route-53.md).
+# Check DLQ for failed messages
+awslocal sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue-dlq
+```
 
-Try execute all commands and you will:
- - [x] create a hosted zone
- - [x] Change resource record sets
- - [x] query DNS record
+#### S3 Operations
+```bash
+# Upload a file
+awslocal s3 cp ./my-file.txt s3://my-app-storage/
 
-## Using SQS
+# List bucket contents
+awslocal s3 ls s3://my-app-storage/
 
-Read [this SQS documentation](./docs/sqs.md) and you will:
+# Generate signed URL
+awslocal s3 presign s3://my-app-storage/my-file.txt
+```
 
- - [x] list queues
- - [x] send message to queue
- - [x] receive sent message
- - [x] delete sent message
- - [x] validate DLQ queue configuration
+#### SNS Operations
+```bash
+# Publish a message to a topic
+awslocal sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic --message "Test message"
 
-## Using SNS
+# Publish with message attributes (for filtering)
+awslocal sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic --message "User action" --message-attributes '{"eventType":{"DataType":"String","StringValue":"user-action"}}'
+```
 
-Read [this SNS documentation](./docs/sns.md) and you will:
+## 📚 Additional Resources
 
- - [x] list topics
- - [x] get topic attributes
- - [x] subscribe queue on a topic
- - [x] list subscriptions
- - [x] publish message on topic
- - [x] receive sent message on queue
- - [x] topic unsubscription
+For detailed examples and advanced configurations, refer to the documentation:
+
+- [S3 Service Documentation](./docs/s3.md) - Object storage operations
+- [SQS Service Documentation](./docs/sqs.md) - Message queue operations  
+- [SNS Service Documentation](./docs/sns.md) - Pub/sub messaging
+- [DynamoDB Documentation](./docs/dynamo-db.md) - NoSQL database operations
+- [KMS Documentation](./docs/kms-md) - Key management service
+- [Route 53 Documentation](./docs/route-53.md) - DNS service
+- [Initialization Details](./docs/init.md) - Technical implementation details
+
+## 🛠️ Development
+
+### Project Structure
+```
+├── docker-compose.yml          # LocalStack container configuration
+├── env-settings               # Infrastructure configuration file
+├── scripts/
+│   └── init-aws.sh           # Automated infrastructure provisioning script
+├── docs/                     # Service-specific documentation
+└── volume/                   # LocalStack persistent data
+```
+
+### Customization
+
+To extend the infrastructure automation:
+
+1. Modify `scripts/init-aws.sh` to add new resource types
+2. Update `env-settings` format documentation
+3. Add corresponding configuration parsing logic
+
+## 🤝 Contributing
+
+This project serves as a learning experience with LocalStack. Feel free to:
+
+- Add new AWS service configurations
+- Improve the automation scripts
+- Enhance documentation
+- Share your use cases and improvements

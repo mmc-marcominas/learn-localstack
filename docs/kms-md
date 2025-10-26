@@ -1,17 +1,45 @@
-# Adding KMS feature
+# AWS KMS Service Guide
 
-On [docker-compose file](../docker-compose.yml), change `SERVICES: 'sqs,s3,dynamodb'` to `SERVICES: 'sqs,s3,dynamodb,kms'` adding AWS KMS service.
+This guide demonstrates how to use Amazon KMS (Key Management Service) with LocalStack for encryption and key management operations.
 
-## Useful commands
+## 🎯 Overview
 
-### Create a key
+Amazon KMS is a fully managed service that makes it easy for you to create and manage cryptographic keys and control their use across a wide range of AWS services and your applications. This guide covers essential KMS operations including key creation, encryption, and decryption.
 
-``` bash
-aws --endpoint-url=http://localhost:4566 --region us-east-1 kms create-key | jq
+## 🚀 Getting Started
+
+### Prerequisites
+
+- LocalStack running with KMS service enabled
+- AWS CLI configured for LocalStack (`awslocal` command)
+- `jq` for JSON formatting (optional)
+
+### Service Configuration
+
+Ensure KMS is enabled in your `docker-compose.yml`:
+
+```yaml
+environment:
+  SERVICES: 'sqs,s3,sns,dynamodb,kms,route53'
 ```
 
-Expected result:
-``` json
+## 📋 Core Operations
+
+### 1. Key Management
+
+#### Create a Customer Master Key (CMK)
+
+Create a new encryption key:
+
+```bash
+awslocal kms create-key \
+    --description "My application encryption key" \
+    --key-usage ENCRYPT_DECRYPT \
+    --key-spec SYMMETRIC_DEFAULT
+```
+
+**Expected Response:**
+```json
 {
   "KeyMetadata": {
     "AWSAccountId": "000000000000",
@@ -19,7 +47,7 @@ Expected result:
     "Arn": "arn:aws:kms:us-east-1:000000000000:key/cd94722c-310e-4b95-b567-a9e797299f42",
     "CreationDate": 1729454745.12618,
     "Enabled": true,
-    "Description": "",
+    "Description": "My application encryption key",
     "KeyUsage": "ENCRYPT_DECRYPT",
     "KeyState": "Enabled",
     "Origin": "AWS_KMS",
@@ -32,14 +60,14 @@ Expected result:
 }
 ```
 
-### List keys
+#### List All Keys
 
-``` bash
-aws --endpoint-url=http://localhost:4566 kms list-keys | jq
+```bash
+awslocal kms list-keys | jq
 ```
 
-Expected result:
-``` json
+**Expected Response:**
+```json
 {
   "Keys": [
     {
@@ -50,26 +78,247 @@ Expected result:
 }
 ```
 
-### Encrypt data
+#### Get Key Details
 
-``` bash
-key_id=$(aws --endpoint-url=http://localhost:4566 kms list-keys | jq -r '.Keys[0].KeyId') && echo $key_id
+Retrieve comprehensive information about a specific key:
 
-aws --endpoint-url=http://localhost:4566 kms encrypt --key-id $key_id --plaintext "some important stuff" --output text --query CiphertextBlob | base64 --decode > my_encrypted_data && cat ./my_encrypted_data && echo ''
+```bash
+awslocal kms describe-key \
+    --key-id cd94722c-310e-4b95-b567-a9e797299f42
 ```
 
-Expected result:
-``` text
-bc2592a3-f9f8-43d5-8c70-b4641293a06d��x�4H�//�  �fZ$�H��w�F�M$  �'D}3���<WH/��/_�D#������0ī6
+### 2. Encryption Operations
+
+#### Encrypt Data
+
+Encrypt sensitive data using your KMS key:
+
+```bash
+# Get the key ID dynamically
+key_id=$(awslocal kms list-keys | jq -r '.Keys[0].KeyId')
+echo "Using key: $key_id"
+
+# Encrypt plaintext data
+awslocal kms encrypt \
+    --key-id "$key_id" \
+    --plaintext "This is sensitive data that needs to be encrypted" \
+    --output text \
+    --query CiphertextBlob | base64 --decode > encrypted_data.bin
+
+echo "Data encrypted and saved to encrypted_data.bin"
 ```
 
-### Decrypt data
+#### Encrypt File Content
 
-``` bash
-aws --endpoint-url=http://localhost:4566 kms decrypt --ciphertext-blob fileb://my_encrypted_data --output text --query Plaintext | base64 --decode && echo ''
+Encrypt the contents of a file:
+
+```bash
+# Create a sample file
+echo "Confidential information: user passwords, API keys, etc." > sensitive.txt
+
+# Encrypt file content
+awslocal kms encrypt \
+    --key-id "$key_id" \
+    --plaintext fileb://sensitive.txt \
+    --output text \
+    --query CiphertextBlob | base64 --decode > sensitive_encrypted.bin
+
+echo "File encrypted successfully"
 ```
 
-Expected result:
-``` text
-some important stuff
+### 3. Decryption Operations
+
+#### Decrypt Data
+
+Decrypt previously encrypted data:
+
+```bash
+# Decrypt the encrypted data
+awslocal kms decrypt \
+    --ciphertext-blob fileb://encrypted_data.bin \
+    --output text \
+    --query Plaintext | base64 --decode
+
+echo ""
 ```
+
+**Expected Response:**
+```bash
+This is sensitive data that needs to be encrypted
+```
+
+#### Decrypt File Content
+
+```bash
+# Decrypt the encrypted file
+awslocal kms decrypt \
+    --ciphertext-blob fileb://sensitive_encrypted.bin \
+    --output text \
+    --query Plaintext | base64 --decode
+
+echo ""
+```
+
+**Expected Response:**
+```bash
+Confidential information: user passwords, API keys, etc.
+```
+
+### 4. Advanced Operations
+
+#### Generate Data Key
+
+Generate a data key for envelope encryption:
+
+```bash
+# Generate a data key
+awslocal kms generate-data-key \
+    --key-id "$key_id" \
+    --key-spec AES_256 \
+    --output text \
+    --query Plaintext | base64 --decode > data_key.bin
+
+# Get the encrypted data key
+awslocal kms generate-data-key \
+    --key-id "$key_id" \
+    --key-spec AES_256 \
+    --output text \
+    --query CiphertextBlob | base64 --decode > encrypted_data_key.bin
+
+echo "Data key generated successfully"
+```
+
+#### Encrypt with Data Key
+
+Use the generated data key for encryption:
+
+```bash
+# Encrypt data using the data key (simplified example)
+echo "Data encrypted with data key" > data_to_encrypt.txt
+
+# In a real scenario, you would use the data key to encrypt the data
+# and store the encrypted data key alongside the encrypted data
+echo "Encrypted data with data key" > encrypted_with_data_key.bin
+```
+
+## 🔧 Practical Examples
+
+### Secure Configuration Storage
+
+Encrypt application configuration data:
+
+```bash
+# Create configuration data
+cat > app_config.json << EOF
+{
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "admin",
+    "password": "secret123"
+  },
+  "api": {
+    "key": "sk-1234567890abcdef",
+    "secret": "secret_key_here"
+  }
+}
+EOF
+
+# Encrypt configuration
+awslocal kms encrypt \
+    --key-id "$key_id" \
+    --plaintext fileb://app_config.json \
+    --output text \
+    --query CiphertextBlob | base64 --decode > app_config_encrypted.bin
+
+echo "Configuration encrypted successfully"
+```
+
+### Environment Variable Encryption
+
+Encrypt sensitive environment variables:
+
+```bash
+# Encrypt environment variables
+awslocal kms encrypt \
+    --key-id "$key_id" \
+    --plaintext "DATABASE_PASSWORD=super_secret_password" \
+    --output text \
+    --query CiphertextBlob | base64 --decode > env_vars_encrypted.bin
+
+echo "Environment variables encrypted"
+```
+
+## ⚠️ Important Notes
+
+### Key Types
+
+- **Symmetric Keys**: Use the same key for encryption and decryption (recommended for most use cases)
+- **Asymmetric Keys**: Use different keys for encryption and decryption (for specific scenarios)
+
+### Encryption Context
+
+You can add encryption context for additional security:
+
+```bash
+awslocal kms encrypt \
+    --key-id "$key_id" \
+    --plaintext "Sensitive data" \
+    --encryption-context '{
+        "Environment": "Production",
+        "Application": "MyApp",
+        "Version": "1.0"
+    }' \
+    --output text \
+    --query CiphertextBlob | base64 --decode > context_encrypted.bin
+```
+
+### Key Rotation
+
+Enable automatic key rotation:
+
+```bash
+awslocal kms enable-key-rotation \
+    --key-id "$key_id"
+
+echo "Key rotation enabled"
+```
+
+### Security Best Practices
+
+1. **Use Encryption Context**: Add context to your encryption operations for additional security
+2. **Rotate Keys Regularly**: Enable automatic key rotation for production environments
+3. **Limit Key Usage**: Use key policies to restrict key usage to specific services or users
+4. **Monitor Key Usage**: Enable CloudTrail to monitor key usage and access patterns
+5. **Store Encrypted Data Securely**: Never store plaintext data alongside encrypted data
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Key Not Found
+```bash
+# Verify key exists
+awslocal kms list-keys | jq '.Keys[] | select(.KeyId == "your-key-id")'
+```
+
+#### Decryption Failed
+```bash
+# Check if the encrypted data is valid
+file encrypted_data.bin
+```
+
+#### Permission Denied
+```bash
+# Verify key permissions
+awslocal kms get-key-policy \
+    --key-id "$key_id" \
+    --policy-name default
+```
+
+## 📚 Additional Resources
+
+- [AWS KMS Documentation](https://docs.aws.amazon.com/kms/)
+- [LocalStack KMS Guide](https://docs.localstack.cloud/user-guide/aws/kms/)
+- [KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
+- [Envelope Encryption](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#envelope-encryption)
