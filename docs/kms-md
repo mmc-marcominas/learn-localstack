@@ -32,10 +32,11 @@ environment:
 Create a new encryption key:
 
 ```bash
-awslocal kms create-key \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms create-key \
     --description "My application encryption key" \
     --key-usage ENCRYPT_DECRYPT \
-    --key-spec SYMMETRIC_DEFAULT
+    --key-spec SYMMETRIC_DEFAULT \
+    | jq
 ```
 
 **Expected Response:**
@@ -63,7 +64,7 @@ awslocal kms create-key \
 #### List All Keys
 
 ```bash
-awslocal kms list-keys | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms list-keys | jq
 ```
 
 **Expected Response:**
@@ -83,7 +84,7 @@ awslocal kms list-keys | jq
 Retrieve comprehensive information about a specific key:
 
 ```bash
-awslocal kms describe-key \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms describe-key \
     --key-id cd94722c-310e-4b95-b567-a9e797299f42
 ```
 
@@ -95,13 +96,13 @@ Encrypt sensitive data using your KMS key:
 
 ```bash
 # Get the key ID dynamically
-key_id=$(awslocal kms list-keys | jq -r '.Keys[0].KeyId')
+key_id=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 kms list-keys | jq -r '.Keys[0].KeyId')
 echo "Using key: $key_id"
 
 # Encrypt plaintext data
-awslocal kms encrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms encrypt \
     --key-id "$key_id" \
-    --plaintext "This is sensitive data that needs to be encrypted" \
+    --plaintext fileb://<(echo -n "This is sensitive data that needs to be encrypted") \
     --output text \
     --query CiphertextBlob | base64 --decode > encrypted_data.bin
 
@@ -117,7 +118,7 @@ Encrypt the contents of a file:
 echo "Confidential information: user passwords, API keys, etc." > sensitive.txt
 
 # Encrypt file content
-awslocal kms encrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms encrypt \
     --key-id "$key_id" \
     --plaintext fileb://sensitive.txt \
     --output text \
@@ -134,7 +135,7 @@ Decrypt previously encrypted data:
 
 ```bash
 # Decrypt the encrypted data
-awslocal kms decrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms decrypt \
     --ciphertext-blob fileb://encrypted_data.bin \
     --output text \
     --query Plaintext | base64 --decode
@@ -151,7 +152,7 @@ This is sensitive data that needs to be encrypted
 
 ```bash
 # Decrypt the encrypted file
-awslocal kms decrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms decrypt \
     --ciphertext-blob fileb://sensitive_encrypted.bin \
     --output text \
     --query Plaintext | base64 --decode
@@ -172,14 +173,14 @@ Generate a data key for envelope encryption:
 
 ```bash
 # Generate a data key
-awslocal kms generate-data-key \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms generate-data-key \
     --key-id "$key_id" \
     --key-spec AES_256 \
     --output text \
     --query Plaintext | base64 --decode > data_key.bin
 
 # Get the encrypted data key
-awslocal kms generate-data-key \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms generate-data-key \
     --key-id "$key_id" \
     --key-spec AES_256 \
     --output text \
@@ -225,7 +226,7 @@ cat > app_config.json << EOF
 EOF
 
 # Encrypt configuration
-awslocal kms encrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms encrypt \
     --key-id "$key_id" \
     --plaintext fileb://app_config.json \
     --output text \
@@ -240,7 +241,7 @@ Encrypt sensitive environment variables:
 
 ```bash
 # Encrypt environment variables
-awslocal kms encrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms encrypt \
     --key-id "$key_id" \
     --plaintext "DATABASE_PASSWORD=super_secret_password" \
     --output text \
@@ -261,7 +262,7 @@ echo "Environment variables encrypted"
 You can add encryption context for additional security:
 
 ```bash
-awslocal kms encrypt \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms encrypt \
     --key-id "$key_id" \
     --plaintext "Sensitive data" \
     --encryption-context '{
@@ -278,7 +279,7 @@ awslocal kms encrypt \
 Enable automatic key rotation:
 
 ```bash
-awslocal kms enable-key-rotation \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms enable-key-rotation \
     --key-id "$key_id"
 
 echo "Key rotation enabled"
@@ -299,7 +300,7 @@ echo "Key rotation enabled"
 #### Key Not Found
 ```bash
 # Verify key exists
-awslocal kms list-keys | jq '.Keys[] | select(.KeyId == "your-key-id")'
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms list-keys | jq '.Keys[] | select(.KeyId == "your-key-id")'
 ```
 
 #### Decryption Failed
@@ -311,7 +312,7 @@ file encrypted_data.bin
 #### Permission Denied
 ```bash
 # Verify key permissions
-awslocal kms get-key-policy \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 kms get-key-policy \
     --key-id "$key_id" \
     --policy-name default
 ```

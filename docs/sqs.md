@@ -30,7 +30,7 @@ environment:
 #### List All Queues
 
 ```bash
-awslocal sqs list-queues | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues | jq
 ```
 
 **Expected Response:**
@@ -49,20 +49,42 @@ awslocal sqs list-queues | jq
 
 #### Send a Message
 
+Before start publishing messages, lets create a bash function that will help us:
+
+``` bash
+create_event() {
+  # Usage: create_event '{"user_id": 83411, "name": "John Doe", "status": "active"}'
+  local data_json="$1"
+
+  # Generate event_id and event_time
+  local event_id=$(uuidgen)
+  local event_time=$(date -u '+%Y-%m-%dT%H:%M:%S:%3NZ')
+
+  # Construct final event object safely with jq
+  jq -n \
+    --arg event_id "$event_id" \
+    --arg event_time "$event_time" \
+    --argjson data "$data_json" \
+    '{event_id: $event_id, event_time: $event_time, data: $data}'
+}
+```
+
+And let's test it:
+
+``` bash
+data='{"user_id": 83411, "name": "John Doe", "status": "active"}'
+event_json=$(create_event "$data")
+echo "$event_json"
+```
+
 Send a structured event message to a queue:
 
 ```bash
-awslocal sqs send-message \
+data='{"user_id": 83411, "name": "John Doe", "status": "active"}'
+message=$(create_event "$data")
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs send-message \
     --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue \
-    --message-body '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "user_id": 83411,
-            "name": "John Doe",
-            "status": "active"
-        }
-    }'
+    --message-body "$message" | jq
 ```
 
 **Expected Response:**
@@ -78,8 +100,8 @@ awslocal sqs send-message \
 Retrieve messages from a queue:
 
 ```bash
-awslocal sqs receive-message \
-    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message \
+    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue | jq
 ```
 
 **Expected Response:**
@@ -102,12 +124,12 @@ After processing a message, delete it from the queue:
 
 ```bash
 # Get the receipt handle
-receipt_handle=$(awslocal sqs receive-message \
+receipt_handle=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message \
     --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue \
     | jq -r '.Messages[0].ReceiptHandle')
 
 # Delete the message
-awslocal sqs delete-message \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs delete-message \
     --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue \
     --receipt-handle "$receipt_handle"
 ```
@@ -122,17 +144,17 @@ Our infrastructure automatically creates DLQ queues with a redrive policy (maxRe
 
 1. **Send a message to the main queue:**
 ```bash
-awslocal sqs send-message \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs send-message \
     --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue \
-    --message-body "Test message for DLQ"
+    --message-body "Test message for DLQ" | jq
 ```
 
 2. **Receive the message multiple times without deleting it:**
 ```bash
 # Use visibility-timeout 0 to immediately make the message available again
-awslocal sqs receive-message \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message \
     --visibility-timeout 0 \
-    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue
+    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue | jq
 ```
 
 3. **Check LocalStack logs for DLQ activity:**
@@ -143,8 +165,8 @@ localstack-main  | 2024-10-20T22:15:23.079 DEBUG --- [et.reactor-0] l.services.s
 
 4. **Retrieve the message from the DLQ:**
 ```bash
-awslocal sqs receive-message \
-    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue-dlq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message \
+    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue-dlq | jq
 ```
 
 ## 🔧 Advanced Operations

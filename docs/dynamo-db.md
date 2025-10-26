@@ -32,55 +32,56 @@ environment:
 Create a DynamoDB table with a primary key:
 
 ```bash
-awslocal dynamodb create-table \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb create-table \
     --table-name my-app-data \
     --key-schema AttributeName=id,KeyType=HASH \
     --attribute-definitions AttributeName=id,AttributeType=S \
-    --billing-mode PAY_PER_REQUEST
+    --billing-mode PAY_PER_REQUEST | jq
 ```
 
 **Expected Response:**
 ```json
 {
-    "TableDescription": {
-        "AttributeDefinitions": [
-            {
-                "AttributeName": "id",
-                "AttributeType": "S"
-            }
-        ],
-        "TableName": "my-app-data",
-        "KeySchema": [
-            {
-                "AttributeName": "id",
-                "KeyType": "HASH"
-            }
-        ],
-        "TableStatus": "ACTIVE",
-        "CreationDateTime": 1729453051.354,
-        "ProvisionedThroughput": {
-            "LastIncreaseDateTime": 0.0,
-            "LastDecreaseDateTime": 0.0,
-            "NumberOfDecreasesToday": 0,
-            "ReadCapacityUnits": 0,
-            "WriteCapacityUnits": 0
-        },
-        "TableSizeBytes": 0,
-        "ItemCount": 0,
-        "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/my-app-data",
-        "TableId": "2fedc682-4b5c-46fa-a1c6-d078b8379756",
-        "BillingModeSummary": {
-            "BillingMode": "PAY_PER_REQUEST",
-            "LastUpdateToPayPerRequestDateTime": 1729453051.354
-        }
-    }
+  "TableDescription": {
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "id",
+        "AttributeType": "S"
+      }
+    ],
+    "TableName": "my-app-data",
+    "KeySchema": [
+      {
+        "AttributeName": "id",
+        "KeyType": "HASH"
+      }
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": "2025-10-26T18:15:01.870000-03:00",
+    "ProvisionedThroughput": {
+      "LastIncreaseDateTime": "1969-12-31T21:00:00-03:00",
+      "LastDecreaseDateTime": "1969-12-31T21:00:00-03:00",
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 0,
+      "WriteCapacityUnits": 0
+    },
+    "TableSizeBytes": 0,
+    "ItemCount": 0,
+    "TableArn": "arn:aws:dynamodb:us-east-1:000000000000:table/my-app-data",
+    "TableId": "df7c8b65-756d-4fc1-83e3-072100302dd1",
+    "BillingModeSummary": {
+      "BillingMode": "PAY_PER_REQUEST",
+      "LastUpdateToPayPerRequestDateTime": "2025-10-26T18:15:01.870000-03:00"
+    },
+    "DeletionProtectionEnabled": false
+  }
 }
 ```
 
 #### List All Tables
 
 ```bash
-awslocal dynamodb list-tables | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb list-tables | jq
 ```
 
 **Expected Response:**
@@ -97,7 +98,7 @@ awslocal dynamodb list-tables | jq
 Get comprehensive information about a table:
 
 ```bash
-awslocal dynamodb describe-table --table-name my-app-data | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb describe-table --table-name my-app-data | jq
 ```
 
 ### 2. Data Operations
@@ -108,24 +109,24 @@ Add individual items to the table:
 
 ```bash
 # Insert a simple item
-awslocal dynamodb put-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb put-item \
     --table-name my-app-data \
     --item '{
         "id": {"S": "user-001"},
         "name": {"S": "John Doe"},
         "email": {"S": "john@example.com"},
-        "status": {"S": "active"},
+        "data_status": {"S": "active"},
         "created_at": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}
     }'
 
 # Insert another item
-awslocal dynamodb put-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb put-item \
     --table-name my-app-data \
     --item '{
         "id": {"S": "user-002"},
         "name": {"S": "Jane Smith"},
         "email": {"S": "jane@example.com"},
-        "status": {"S": "inactive"},
+        "data_status": {"S": "inactive"},
         "created_at": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}
     }'
 ```
@@ -135,13 +136,13 @@ awslocal dynamodb put-item \
 Add items with nested data structures:
 
 ```bash
-awslocal dynamodb put-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb put-item \
     --table-name my-app-data \
     --item '{
         "id": {"S": "user-003"},
         "name": {"S": "Bob Johnson"},
         "email": {"S": "bob@example.com"},
-        "status": {"S": "active"},
+        "data_status": {"S": "active"},
         "profile": {
             "M": {
                 "age": {"N": "30"},
@@ -166,7 +167,7 @@ awslocal dynamodb put-item \
 Retrieve a specific item by its primary key:
 
 ```bash
-awslocal dynamodb get-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb get-item \
     --table-name my-app-data \
     --key '{"id": {"S": "user-001"}}' \
     | jq
@@ -179,7 +180,7 @@ awslocal dynamodb get-item \
         "id": {"S": "user-001"},
         "name": {"S": "John Doe"},
         "email": {"S": "john@example.com"},
-        "status": {"S": "active"},
+        "data_status": {"S": "active"},
         "created_at": {"S": "2024-10-20T18:47:02Z"}
     }
 }
@@ -190,7 +191,7 @@ awslocal dynamodb get-item \
 Retrieve all items from the table:
 
 ```bash
-awslocal dynamodb scan --table-name my-app-data | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb scan --table-name my-app-data | jq
 ```
 
 **Expected Response:**
@@ -201,21 +202,21 @@ awslocal dynamodb scan --table-name my-app-data | jq
             "id": {"S": "user-002"},
             "name": {"S": "Jane Smith"},
             "email": {"S": "jane@example.com"},
-            "status": {"S": "inactive"},
+            "data_status": {"S": "inactive"},
             "created_at": {"S": "2024-10-20T18:47:02Z"}
         },
         {
             "id": {"S": "user-001"},
             "name": {"S": "John Doe"},
             "email": {"S": "john@example.com"},
-            "status": {"S": "active"},
+            "data_status": {"S": "active"},
             "created_at": {"S": "2024-10-20T18:47:02Z"}
         },
         {
             "id": {"S": "user-003"},
             "name": {"S": "Bob Johnson"},
             "email": {"S": "bob@example.com"},
-            "status": {"S": "active"},
+            "data_status": {"S": "active"},
             "profile": {
                 "M": {
                     "age": {"N": "30"},
@@ -246,10 +247,10 @@ Scan with filter conditions:
 
 ```bash
 # Find all active users
-awslocal dynamodb scan \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb scan \
     --table-name my-app-data \
-    --filter-expression "status = :status" \
-    --expression-attribute-values '{":status": {"S": "active"}}' \
+    --filter-expression "data_status = :data_status" \
+    --expression-attribute-values '{":data_status": {"S": "active"}}' \
     | jq
 ```
 
@@ -258,10 +259,10 @@ awslocal dynamodb scan \
 Retrieve only specific attributes:
 
 ```bash
-# Get only id and name for all users
-awslocal dynamodb scan \
+# Get only id and email for all users
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb scan \
     --table-name my-app-data \
-    --projection-expression "id, name" \
+    --projection-expression "id, email" \
     | jq
 ```
 
@@ -271,16 +272,16 @@ Update items with conditions:
 
 ```bash
 # Update user status only if current status is active
-awslocal dynamodb put-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb put-item \
     --table-name my-app-data \
     --item '{
         "id": {"S": "user-001"},
         "name": {"S": "John Doe"},
         "email": {"S": "john@example.com"},
-        "status": {"S": "suspended"},
+        "data_status": {"S": "suspended"},
         "updated_at": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}
     }' \
-    --condition-expression "status = :current_status" \
+    --condition-expression "data_status = :current_status" \
     --expression-attribute-values '{":current_status": {"S": "active"}}'
 ```
 
@@ -289,7 +290,7 @@ awslocal dynamodb put-item \
 #### Get Item Count
 
 ```bash
-awslocal dynamodb describe-table \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb describe-table \
     --table-name my-app-data \
     --query 'Table.ItemCount'
 ```
@@ -302,7 +303,7 @@ awslocal dynamodb describe-table \
 #### Get Table Size
 
 ```bash
-awslocal dynamodb describe-table \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb describe-table \
     --table-name my-app-data \
     --query 'Table.TableSizeBytes'
 ```
@@ -316,7 +317,7 @@ awslocal dynamodb describe-table \
 Insert multiple items efficiently:
 
 ```bash
-awslocal dynamodb batch-write-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb batch-write-item \
     --request-items '{
         "my-app-data": [
             {
@@ -324,7 +325,7 @@ awslocal dynamodb batch-write-item \
                     "Item": {
                         "id": {"S": "batch-001"},
                         "name": {"S": "Batch User 1"},
-                        "status": {"S": "active"}
+                        "data_status": {"S": "active"}
                     }
                 }
             },
@@ -333,7 +334,7 @@ awslocal dynamodb batch-write-item \
                     "Item": {
                         "id": {"S": "batch-002"},
                         "name": {"S": "Batch User 2"},
-                        "status": {"S": "active"}
+                        "data_status": {"S": "active"}
                     }
                 }
             }
@@ -346,7 +347,7 @@ awslocal dynamodb batch-write-item \
 Retrieve multiple items by their keys:
 
 ```bash
-awslocal dynamodb batch-get-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb batch-get-item \
     --request-items '{
         "my-app-data": {
             "Keys": [
@@ -365,11 +366,11 @@ awslocal dynamodb batch-get-item \
 Modify specific attributes:
 
 ```bash
-awslocal dynamodb update-item \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 dynamodb update-item \
     --table-name my-app-data \
     --key '{"id": {"S": "user-001"}}' \
-    --update-expression "SET #status = :new_status, updated_at = :timestamp" \
-    --expression-attribute-names '{"#status": "status"}' \
+    --update-expression "SET #data_status = :new_status, updated_at = :timestamp" \
+    --expression-attribute-names '{"#data_status": "data_status"}' \
     --expression-attribute-values '{
         ":new_status": {"S": "inactive"},
         ":timestamp": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}

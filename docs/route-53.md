@@ -38,7 +38,7 @@ Create a new hosted zone for your domain:
 
 ```bash
 # Create hosted zone
-zone_id=$(awslocal route53 create-hosted-zone \
+zone_id=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 create-hosted-zone \
     --name example.com \
     --caller-reference "r1-$(date +%s)" \
     | jq -r '.HostedZone.Id')
@@ -54,7 +54,7 @@ Created hosted zone: /hostedzone/LYR7YG78QNK44E6
 #### List Hosted Zones
 
 ```bash
-awslocal route53 list-hosted-zones | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 list-hosted-zones | jq
 ```
 
 **Expected Response:**
@@ -77,7 +77,7 @@ awslocal route53 list-hosted-zones | jq
 #### Get Hosted Zone Details
 
 ```bash
-awslocal route53 get-hosted-zone --id "$zone_id" | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 get-hosted-zone --id "$zone_id" | jq
 ```
 
 ### 2. DNS Record Management
@@ -87,7 +87,7 @@ awslocal route53 get-hosted-zone --id "$zone_id" | jq
 Add an A record pointing to an IP address:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -124,7 +124,7 @@ awslocal route53 change-resource-record-sets \
 Add a CNAME record for subdomain aliasing:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -150,7 +150,7 @@ awslocal route53 change-resource-record-sets \
 Add MX records for email routing:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -179,7 +179,7 @@ awslocal route53 change-resource-record-sets \
 Add TXT records for domain verification or SPF:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -246,7 +246,7 @@ www.example.com.   300 IN      A       192.168.1.100
 View all DNS records in a hosted zone:
 
 ```bash
-awslocal route53 list-resource-record-sets --hosted-zone-id "$zone_id" | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 list-resource-record-sets --hosted-zone-id "$zone_id" | jq
 ```
 
 **Expected Response:**
@@ -295,7 +295,7 @@ Modify existing DNS records:
 
 ```bash
 # Update A record
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -321,7 +321,7 @@ awslocal route53 change-resource-record-sets \
 Remove DNS records:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -347,7 +347,8 @@ awslocal route53 change-resource-record-sets \
 Create health checks for monitoring:
 
 ```bash
-health_check_id=$(awslocal route53 create-health-check \
+health_check_id=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 create-health-check \
+    --caller-reference "$(date +%s)" \
     --health-check-config '{
         "Type": "HTTP",
         "ResourcePath": "/health",
@@ -361,6 +362,13 @@ health_check_id=$(awslocal route53 create-health-check \
 echo "Created health check: $health_check_id"
 ```
 
+To validate it:
+
+``` bash
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 get-health-check \
+    --health-check-id "$health_check_id"
+```
+
 ## 🔧 Practical Examples
 
 ### Complete Domain Setup
@@ -371,7 +379,7 @@ Set up a complete domain with multiple record types:
 #!/bin/bash
 
 # Create hosted zone
-zone_id=$(awslocal route53 create-hosted-zone \
+zone_id=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 create-hosted-zone \
     --name myapp.local \
     --caller-reference "setup-$(date +%s)" \
     | jq -r '.HostedZone.Id')
@@ -379,7 +387,7 @@ zone_id=$(awslocal route53 create-hosted-zone \
 echo "Created hosted zone: $zone_id"
 
 # Add A record for main domain
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -396,7 +404,7 @@ awslocal route53 change-resource-record-sets \
     }'
 
 # Add www subdomain
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -413,7 +421,7 @@ awslocal route53 change-resource-record-sets \
     }'
 
 # Add API subdomain
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -437,7 +445,7 @@ echo "Domain setup complete!"
 Configure load balancing using multiple A records:
 
 ```bash
-awslocal route53 change-resource-record-sets \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 change-resource-record-sets \
     --hosted-zone-id "$zone_id" \
     --change-batch '{
         "Changes": [
@@ -499,7 +507,7 @@ Health checks monitor the availability of your resources:
 #### DNS Resolution Not Working
 ```bash
 # Check if Route 53 service is running
-awslocal route53 list-hosted-zones
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 list-hosted-zones | jq
 
 # Verify DNS server is accessible
 dig @localhost example.com NS
@@ -508,7 +516,7 @@ dig @localhost example.com NS
 #### Record Not Found
 ```bash
 # List all records in hosted zone
-awslocal route53 list-resource-record-sets --hosted-zone-id "$zone_id"
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 list-resource-record-sets --hosted-zone-id "$zone_id" | jq
 
 # Check specific record
 dig @localhost www.example.com A
@@ -517,7 +525,7 @@ dig @localhost www.example.com A
 #### Permission Issues
 ```bash
 # Verify hosted zone exists
-awslocal route53 get-hosted-zone --id "$zone_id"
+aws --endpoint-url=http://localhost:4566 --region us-east-1 route53 get-hosted-zone --id "$zone_id" | jq
 ```
 
 ## 📚 Additional Resources
