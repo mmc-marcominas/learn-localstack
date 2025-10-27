@@ -66,7 +66,7 @@ The script automatically:
 After initialization, verify all queues were created:
 
 ```bash
-awslocal sqs list-queues | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues | jq
 ```
 
 **Expected Result:**

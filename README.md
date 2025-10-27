@@ -8,11 +8,11 @@ This project provides an automated infrastructure-as-code solution for LocalStac
 
 ### Key Features
 
+- **⚙️ Configuration-Driven**: Define all infrastructure through a simple `env-settings` file
+- **🚀 Zero-Configuration Setup**: Infrastructure is created automatically on container startup
 - **🔄 Queue Creation with DLQ**: Automatically creates SQS queues with dead letter queues for reliable message processing
 - **🪣 Bucket Creation**: Provisions S3 buckets for object storage
 - **📢 Topic Creation with Subscriptions**: Sets up SNS topics with queue subscriptions and optional filter policies
-- **⚙️ Configuration-Driven**: Define all infrastructure through a simple `env-settings` file
-- **🚀 Zero-Configuration Setup**: Infrastructure is created automatically on container startup
 
 ## 🚀 Quick Start
 
@@ -61,16 +61,16 @@ curl http://localhost:4566/_localstack/info | jq
 View created resources:
 ```bash
 # List all buckets
-awslocal s3api list-buckets
+aws --endpoint-url=http://localhost:4566 --region us-east-1 s3api list-buckets
 
 # List all queues
-awslocal sqs list-queues
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs list-queues
 
 # List all topics
-awslocal sns list-topics
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns list-topics
 
 # List all subscriptions
-awslocal sns list-subscriptions
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns list-subscriptions
 ```
 
 ## 📋 Configuration Reference
@@ -119,34 +119,34 @@ While the automated setup handles most use cases, you can also manually interact
 #### SQS Operations
 ```bash
 # Send a message to a queue
-awslocal sqs send-message --queue-url http://localhost:4566/000000000000/my-processing-queue --message-body "Hello World"
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs send-message --queue-url http://localhost:4566/000000000000/my-processing-queue --message-body "Hello World"
 
 # Receive messages
-awslocal sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue
 
 # Check DLQ for failed messages
-awslocal sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue-dlq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message --queue-url http://localhost:4566/000000000000/my-processing-queue-dlq
 ```
 
 #### S3 Operations
 ```bash
 # Upload a file
-awslocal s3 cp ./my-file.txt s3://my-app-storage/
+aws --endpoint-url=http://localhost:4566 --region us-east-1 s3 cp ./env-settings s3://some-important-bucket/
 
 # List bucket contents
-awslocal s3 ls s3://my-app-storage/
+aws --endpoint-url=http://localhost:4566 --region us-east-1 s3 ls s3://some-important-bucket/
 
 # Generate signed URL
-awslocal s3 presign s3://my-app-storage/my-file.txt
+aws --endpoint-url=http://localhost:4566 --region us-east-1 s3 presign s3://some-important-bucket/env-settings
 ```
 
 #### SNS Operations
 ```bash
 # Publish a message to a topic
-awslocal sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic --message "Test message"
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:some-important-topic --message "Test message"
 
 # Publish with message attributes (for filtering)
-awslocal sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic --message "User action" --message-attributes '{"eventType":{"DataType":"String","StringValue":"user-action"}}'
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish --topic-arn arn:aws:sns:us-east-1:000000000000:some-important-topic --message "User action" --message-attributes '{"eventType":{"DataType":"String","StringValue":"user-action"}}'
 ```
 
 ## 📚 Additional Resources

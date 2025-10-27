@@ -30,7 +30,7 @@ environment:
 #### List All Topics
 
 ```bash
-awslocal sns list-topics | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns list-topics | jq
 ```
 
 **Expected Response:**
@@ -52,8 +52,8 @@ awslocal sns list-topics | jq
 Retrieve detailed information about a topic:
 
 ```bash
-awslocal sns get-topic-attributes \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns get-topic-attributes \
+    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic | jq
 ```
 
 **Expected Response:**
@@ -80,10 +80,10 @@ awslocal sns get-topic-attributes \
 Create a subscription between a topic and an SQS queue:
 
 ```bash
-awslocal sns subscribe \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns subscribe \
     --topic-arn "arn:aws:sns:us-east-1:000000000000:my-event-topic" \
     --protocol sqs \
-    --notification-endpoint "arn:aws:sqs:us-east-1:000000000000:my-processing-queue"
+    --notification-endpoint "arn:aws:sqs:us-east-1:000000000000:my-processing-queue" | jq
 ```
 
 **Expected Response:**
@@ -96,7 +96,7 @@ awslocal sns subscribe \
 #### List All Subscriptions
 
 ```bash
-awslocal sns list-subscriptions | jq
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns list-subscriptions | jq
 ```
 
 **Expected Response:**
@@ -117,7 +117,7 @@ awslocal sns list-subscriptions | jq
 #### Unsubscribe from Topic
 
 ```bash
-awslocal sns unsubscribe \
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns unsubscribe \
     --subscription-arn "arn:aws:sns:us-east-1:000000000000:my-event-topic:e74ccf07-3fad-4a4e-b19d-3e95cc449823"
 ```
 
@@ -125,20 +125,42 @@ awslocal sns unsubscribe \
 
 #### Publish Basic Message
 
+Before start publishing messages, lets create a bash function that will help us:
+
+``` bash
+create_event() {
+  # Usage: create_event '{"user_id": 83411, "name": "John Doe", "status": "active"}'
+  local data_json="$1"
+
+  # Generate event_id and event_time
+  local event_id=$(uuidgen)
+  local event_time=$(date -u '+%Y-%m-%dT%H:%M:%S:%3NZ')
+
+  # Construct final event object safely with jq
+  jq -n \
+    --arg event_id "$event_id" \
+    --arg event_time "$event_time" \
+    --argjson data "$data_json" \
+    '{event_id: $event_id, event_time: $event_time, data: $data}'
+}
+```
+
+And let's test it:
+
+``` bash
+data='{"user_id": 83411, "name": "John Doe", "status": "active"}'
+event_json=$(create_event "$data")
+echo "$event_json"
+```
+
 Send a message to all subscribers:
 
 ```bash
-awslocal sns publish \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
-    --message '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "user_id": 83411,
-            "name": "John Doe",
-            "status": "active"
-        }
-    }'
+data='{"user_id": 83411, "name": "John Doe", "status": "active"}'
+message=$(create_event "$data")
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
+  --message "$message" | jq
 ```
 
 **Expected Response:**
@@ -153,17 +175,11 @@ awslocal sns publish \
 Send a message with attributes for filtering:
 
 ```bash
-awslocal sns publish \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
-    --message '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "user_id": 83411,
-            "name": "John Doe",
-            "status": "active"
-        }
-    }' \
+data='{"user_id": 83411, "name": "Jane Doe", "status": "active"}'
+message=$(create_event "$data")
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
+  --message "$message" \
     --message-attributes '{
         "eventType": {
             "DataType": "String",
@@ -179,8 +195,8 @@ awslocal sns publish \
 After publishing to a topic, retrieve messages from subscribed queues:
 
 ```bash
-awslocal sqs receive-message \
-    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sqs receive-message \
+    --queue-url http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/my-processing-queue | jq
 ```
 
 **Expected Response:**
@@ -215,34 +231,22 @@ Consider a topic `my-event-topic` with three queue subscriptions:
 
 1. **Publish message without attributes:**
 ```bash
-awslocal sns publish \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
-    --message '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "user_id": 83411,
-            "name": "John Doe",
-            "status": "active"
-        }
-    }'
+data='{"user_id": 83411, "name": "John Doe", "status": "active"}'
+message=$(create_event "$data")
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
+  --message "$message" | jq
 ```
 
 **Result**: Only `my-backup-queue` receives the message (no filter = receives all).
 
 2. **Publish message with `user-action` attribute:**
 ```bash
-awslocal sns publish \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
-    --message '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "user_id": 83411,
-            "name": "John Doe",
-            "status": "active"
-        }
-    }' \
+data='{"user_id": 83411, "name": "Jane Doe", "status": "active"}'
+message=$(create_event "$data")
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
+  --message "$message" \
     --message-attributes '{
         "eventType": {
             "DataType": "String",
@@ -255,22 +259,13 @@ awslocal sns publish \
 
 3. **Publish message with `system-alert` attribute:**
 ```bash
-awslocal sns publish \
-    --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
-    --message '{
-        "event_id": "'$(uuidgen)'",
-        "event_time": "'$(date '+%Y-%m-%d %H:%M:%S')Z'",
-        "data": {
-            "alert_level": "high",
-            "message": "System maintenance required"
-        }
-    }' \
-    --message-attributes '{
-        "eventType": {
-            "DataType": "String",
-            "StringValue": "system-alert"
-        }
-    }'
+data='{"alert_level": "high", "message": "System maintenance required"}'
+message=$(create_event "$data")
+attributes='{"eventType": {"DataType": "String","StringValue": "system-alert"}}'
+aws --endpoint-url=http://localhost:4566 --region us-east-1 sns publish \
+  --topic-arn arn:aws:sns:us-east-1:000000000000:my-event-topic \
+  --message "$message" \
+    --message-attributes "$attributes" | jq
 ```
 
 **Result**: Both `my-notification-queue` and `my-backup-queue` receive the message.
